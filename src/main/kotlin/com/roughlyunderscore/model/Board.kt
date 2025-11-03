@@ -1,8 +1,10 @@
 package com.roughlyunderscore.model
 
+import com.roughlyunderscore.utils.detectCompletedBoundaryClues
 import com.roughlyunderscore.utils.detectInsufficientChains
 import com.roughlyunderscore.utils.fillDeterministicRows
 import com.roughlyunderscore.utils.swapRowsAndColumns
+import com.roughlyunderscore.utils.text
 
 class Board(
   /**
@@ -71,19 +73,25 @@ class Board(
   fun solve(): Int {
     var iterations = 0
     println("Started solving")
-    println("Empty cells: ${board.sumOf { row -> row.count { it.state == CellState.EMPTY } }}")
     while (!isSolved) {
+      if (iterations > 20) throw IllegalStateException("Too much")
+
       iterations++
-      println("Iteration $iterations")
+      println("\n------\nIteration $iterations")
+
+      /*println("Empty cells: ${board.sumOf { row -> row.count { it.state == CellState.EMPTY } }}")
+      println("Board state:")
+      board.forEach { println(it.text()) }
+      println("")*/
 
       var changesDetected = false
 
-      changesDetected = changesDetected || trySolvingRows(board)
+      changesDetected = changesDetected or trySolvingRows(board)
 
       // Swap rows and columns and try again
       println("Swapping columns and rows")
       var transposedBoard = board.swapRowsAndColumns()
-      changesDetected = changesDetected || trySolvingRows(transposedBoard, true)
+      changesDetected = changesDetected or trySolvingRows(transposedBoard, true)
 
       // Swap rows and columns back and refill the board
       transposedBoard = transposedBoard.swapRowsAndColumns()
@@ -105,13 +113,19 @@ class Board(
 
   private fun trySolvingRows(targetBoard: Array<Array<Cell>>, swapped: Boolean = false): Boolean {
     var changesDetected = false
-    for (rowIdx in 1..rows) {
-      val row = targetBoard[rowIdx - 1]
-      val clues = (if (swapped) columnClues else rowClues)[rowIdx - 1]
+    for (idx in 1..(if (swapped) cols else rows)) {
+      val row = targetBoard[idx - 1]
+      val clues = (if (swapped) columnClues else rowClues)[idx - 1]
 
-      changesDetected = changesDetected
-        || row.detectInsufficientChains(clues)
-        || row.fillDeterministicRows(clues)
+      println("Row before detections: ${row.text()}")
+      changesDetected = changesDetected or row.detectInsufficientChains(clues)
+      println("Row after insufficient chains: ${row.text()}")
+      changesDetected = changesDetected or row.fillDeterministicRows(clues)
+      println("Row after deterministic filling: ${row.text()}")
+      changesDetected = changesDetected or row.detectCompletedBoundaryClues(clues)
+      println("Row after boundary clues: ${row.text()}")
+
+      println()
     }
 
     return changesDetected

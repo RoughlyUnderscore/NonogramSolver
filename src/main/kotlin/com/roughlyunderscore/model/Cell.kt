@@ -6,6 +6,6 @@ class Cell(var state: CellState) {
   override fun toString() = when (state) {
     CellState.EMPTY -> " " //"□"
     CellState.FILLED -> "O" //"■"
-    CellState.CROSSED -> "X" //"✖"
+    CellState.CROSSED -> "x" //"✖"
   }
 }
