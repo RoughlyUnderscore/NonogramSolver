@@ -1,8 +1,8 @@
 package com.roughlyunderscore.model
 
+import com.roughlyunderscore.utils.crossOutFilled
 import com.roughlyunderscore.utils.detectCompletedBoundaryClues
-import com.roughlyunderscore.utils.detectInsufficientChains
-import com.roughlyunderscore.utils.fillDeterministicRows
+import com.roughlyunderscore.utils.intersectionMethod
 import com.roughlyunderscore.utils.swapRowsAndColumns
 import com.roughlyunderscore.utils.text
 
@@ -74,7 +74,7 @@ class Board(
     var iterations = 0
     println("Started solving")
     while (!isSolved) {
-      if (iterations > 20) throw IllegalStateException("Too much")
+      //if (iterations > 20) throw IllegalStateException("Too much")
 
       iterations++
       println("\n------\nIteration $iterations")
@@ -89,7 +89,7 @@ class Board(
       changesDetected = changesDetected or trySolvingRows(board)
 
       // Swap rows and columns and try again
-      println("Swapping columns and rows")
+      // println("Swapping columns and rows")
       var transposedBoard = board.swapRowsAndColumns()
       changesDetected = changesDetected or trySolvingRows(transposedBoard, true)
 
@@ -117,15 +117,20 @@ class Board(
       val row = targetBoard[idx - 1]
       val clues = (if (swapped) columnClues else rowClues)[idx - 1]
 
-      println("Row before detections: ${row.text()}")
-      changesDetected = changesDetected or row.detectInsufficientChains(clues)
-      println("Row after insufficient chains: ${row.text()}")
-      changesDetected = changesDetected or row.fillDeterministicRows(clues)
-      println("Row after deterministic filling: ${row.text()}")
-      changesDetected = changesDetected or row.detectCompletedBoundaryClues(clues)
-      println("Row after boundary clues: ${row.text()}")
+      // println("Row before detections: ${row.text()}")
 
-      println()
+      // Pre-processing before intersection checking
+      // changesDetected = changesDetected or row.detectCompletedBoundaryClues(clues)
+      // println("Row after boundary clues: ${row.text()}")
+
+      // Post-processing after intersection checking
+      changesDetected = changesDetected or row.crossOutFilled(clues)
+      // println("Row after crossing out empty cells: ${row.text()}")
+
+      changesDetected = changesDetected or row.intersectionMethod(clues)
+      // println("Row after intersection method: ${row.text()}")
+
+      // println()
     }
 
     return changesDetected
